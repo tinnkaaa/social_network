@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% block title %}{{ profile.user.username }}{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-4">
+        <div class="card p-4 text-center shadow-sm">
+            {% if profile.avatar %}
+                <img src="{{ profile.avatar.url }}" class="rounded-circle avatar mb-3">
+            {% else %}
+                <img src="/static/avatar.png" class="rounded-circle avatar mb-3">
+            {% endif %}
+
+            <h5>{{ profile.user.username }}</h5>
+            <p class="text-muted">{{ profile.bio|default:"No bio yet" }}</p>
+
+            {% if request.user == profile.user %}
+                <a href="{% url 'profile_edit' %}" class="btn btn-outline-secondary btn-sm">
+                    Edit profile
+                </a>
+            {% else %}
+                <button class="btn btn-primary btn-sm">Follow</button>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="col-md-8">
+        <div class="card p-4 shadow-sm mb-4">
+            <div class="d-flex justify-content-around text-center">
+                <div>
+                    <strong>{{ profile.followers_count }}</strong><br>
+                    Followers
+                </div>
+                <div>
+                    <strong>{{ profile.following_count }}</strong><br>
+                    Following
+                </div>
+                <div>
+                    <strong>0</strong><br>
+                    Posts
+                </div>
+            </div>
+        </div>
+
+        <div class="card p-4 shadow-sm">
+            <h6 class="text-muted">User posts</h6>
+            <p class="text-muted mb-0">No posts yet</p>
+        </div>
+    </div>
+</div>
+{% endblock %}
