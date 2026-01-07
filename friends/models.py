@@ -1,38 +1,54 @@
 from django.db import models
 from auth_system.models import User
 
-# Create your models here.
 class Follow(models.Model):
-    follower = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name='підписник', related_name='following')
-    following = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name='підписаний', related_name='followers')
-    created_at = models.DateTimeField(auto_now_add=True, verbose_name='Дата створення')
-    updated_at = models.DateTimeField(auto_now=True, verbose_name='Дата оновлення')
-    is_active = models.BooleanField(default=True, verbose_name='Активний')
+    follower = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='following_relations',
+        verbose_name='Підписник'
+    )
+    following = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='followers_relations',
+        verbose_name='На кого підписані'
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        verbose_name = 'Підписка'
-        verbose_name_plural = 'Підписки'
+        unique_together = ('follower', 'following')
         ordering = ['-created_at']
-        unique_together = ['follower', 'following']
 
     def __str__(self):
-        return f'{self.follower.username} підписаний на {self.following.username}'
+        return f'{self.follower} → {self.following}'
 
-class FriendRequest(models.Model):
-    STATUS = (
-        ('pending', 'В очікуванні'),
-        ('accepted', 'Прийнято'),
+class FollowRequest(models.Model):
+    STATUS_CHOICES = (
+        ('pending', 'Очікує'),
+        ('accepted', 'Прийнято'),
         ('rejected', 'Відхилено'),
     )
-    from_user = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name='Відправник', related_name='sent_requests')
-    to_user = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name='Отримувач', related_name='received_requests')
-    status = models.CharField(max_length=10, choices=STATUS, default='pending', verbose_name='Статус')
-    created_at = models.DateTimeField(auto_now_add=True, verbose_name='Дата створення')
-    updated_at = models.DateTimeField(auto_now=True, verbose_name='Дата оновлення')
+
+    from_user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='sent_follow_requests'
+    )
+    to_user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='received_follow_requests'
+    )
+    status = models.CharField(
+        max_length=10,
+        choices=STATUS_CHOICES,
+        default='pending'
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        verbose_name = 'Запит на дружбу'
-        verbose_name_plural = 'Запити на дружбу'
+        unique_together = ('from_user', 'to_user')
 
     def __str__(self):
-        return f'{self.from_user.username} відправив запит на дружбу {self.to_user.username}'
+        return f'{self.from_user} → {self.to_user} ({self.status})'

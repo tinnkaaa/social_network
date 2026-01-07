@@ -1,0 +1,149 @@
+{% extends "base.html" %}
+{% block title %}{{ profile_user.username }}{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-9">
+
+        <div class="card mb-4">
+            <div class="card-body d-flex align-items-center gap-4">
+
+                {% if profile_user.profile.avatar %}
+                    <img src="{{ profile_user.profile.avatar.url }}" class="avatar" alt="avatar">
+                {% else %}
+                    <img src="/static/avatar.png" class="avatar" alt="avatar">
+                {% endif %}
+
+                <div class="flex-grow-1">
+                    <h3 class="mb-1">{{ profile_user.username }}</h3>
+
+                    {% if profile_user.profile.bio %}
+                        <p class="text-muted mb-2">{{ profile_user.profile.bio }}</p>
+                    {% endif %}
+
+                    <div class="d-flex gap-4 mb-3">
+                        <div>
+                            <span class="stat-number">{{ profile_user.profile.posts_count }}</span><br>
+                            <small class="text-muted">Posts</small>
+                        </div>
+                        <div>
+                            <span id="followers-count" class="stat-number">
+                                {{ profile_user.profile.followers_count }}
+                            </span><br>
+                            <small class="text-muted">Followers</small>
+                        </div>
+                        <div>
+                            <span class="stat-number">{{ profile_user.profile.following_count }}</span><br>
+                            <small class="text-muted">Following</small>
+                        </div>
+                    </div>
+
+                    {% if user != profile_user %}
+                        <button
+                            id="follow-btn"
+                            data-username="{{ profile_user.username }}"
+                            data-state="
+                                {% if is_following %}following
+                                {% elif follow_request_sent %}requested
+                                {% else %}not_following
+                                {% endif %}
+                            "
+                            class="
+                                btn btn-follow
+                                {% if is_following %}btn-outline-secondary
+                                {% elif follow_request_sent %}btn-warning
+                                {% else %}btn-primary
+                                {% endif %}
+                            "
+                            {% if follow_request_sent %}disabled{% endif %}
+                        >
+                            {% if is_following %}
+                                Unfollow
+                            {% elif follow_request_sent %}
+                                Request sent
+                            {% else %}
+                                Follow
+                            {% endif %}
+                        </button>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-body">
+
+                {% if can_view_profile %}
+                    {% if posts %}
+                        {% for post in posts %}
+                            <div class="border-bottom pb-3 mb-3">
+                                <p class="mb-1">{{ post.content }}</p>
+                                <small class="text-muted d-block mb-2">
+                                    {{ post.created_at|date:"d M Y H:i" }}
+                                </small>
+                            </div>
+                        {% endfor %}
+                    {% else %}
+                        <p class="text-muted text-center mb-0">
+                            No posts yet
+                        </p>
+                    {% endif %}
+                {% else %}
+                    <div class="text-center py-5">
+                        <h5 class="mt-3">Private account</h5>
+                        <p class="text-muted">
+                            Follow this user to see their posts
+                        </p>
+                    </div>
+                {% endif %}
+
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- JS -->
+<script>
+const btn = document.getElementById('follow-btn');
+
+if (btn) {
+    btn.addEventListener('click', () => {
+        const username = btn.dataset.username;
+
+        fetch(`/u/${username}/follow/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': '{{ csrf_token }}',
+            }
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.result === 'followed') {
+                btn.textContent = 'Unfollow';
+                btn.className = 'btn btn-outline-secondary btn-follow';
+                btn.dataset.state = 'following';
+            }
+
+            if (data.result === 'unfollowed') {
+                btn.textContent = 'Follow';
+                btn.className = 'btn btn-primary btn-follow';
+                btn.dataset.state = 'not_following';
+            }
+
+            if (data.result === 'request_sent') {
+                btn.textContent = 'Request sent';
+                btn.className = 'btn btn-warning btn-follow';
+                btn.disabled = true;
+                btn.dataset.state = 'requested';
+            }
+
+            if (data.followers_count !== undefined) {
+                document.getElementById('followers-count').textContent =
+                    data.followers_count;
+            }
+        });
+    });
+}
+</script>
+
+{% endblock %}

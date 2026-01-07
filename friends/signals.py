@@ -1,0 +1,19 @@
+from django.db.models.signals import post_save, post_delete
+from django.dispatch import receiver
+from .models import Follow
+
+
+@receiver(post_save, sender=Follow)
+def increase_follow_counts(sender, instance, created, **kwargs):
+    if created:
+        instance.follower.profile.following_count += 1
+        instance.following.profile.followers_count += 1
+        instance.follower.profile.save()
+        instance.following.profile.save()
+
+@receiver(post_delete, sender=Follow)
+def decrease_follow_counts(sender, instance, **kwargs):
+    instance.follower.profile.following_count -= 1
+    instance.following.profile.followers_count -= 1
+    instance.follower.profile.save()
+    instance.following.profile.save()
