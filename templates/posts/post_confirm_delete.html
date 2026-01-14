@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="card p-4 text-center">
+    <h5>Delete this post?</h5>
+    <form method="post">
+        {% csrf_token %}
+        <button class="btn btn-danger">Delete</button>
+        <a href="{{ request.META.HTTP_REFERER }}" class="btn btn-secondary">Cancel</a>
+    </form>
+</div>
+{% endblock %}

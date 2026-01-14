@@ -1,0 +1,106 @@
+{% extends "base.html" %}
+{% block title %}Post{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+
+        <div class="card mb-4">
+            <div class="card-body">
+
+                <div class="d-flex align-items-center mb-3">
+                    <img src="{{ post.author.profile.avatar.url }}"
+                         class="rounded-circle me-2"
+                         style="width:40px;height:40px;object-fit:cover">
+                    <strong>{{ post.author.username }}</strong>
+
+                    {% if is_author %}
+                        <div class="ms-auto">
+                            <a href="{% url 'post_update' post.id %}" class="btn btn-sm btn-outline-secondary">Edit</a>
+                            <a href="{% url 'post_delete' post.id %}" class="btn btn-sm btn-outline-danger">Delete</a>
+                        </div>
+                    {% endif %}
+                </div>
+
+                {% if post.images.exists %}
+                <div id="carouselPost" class="carousel slide mb-3" data-bs-ride="carousel">
+                    <div class="carousel-inner">
+                        {% for image in post.images.all %}
+                        <div class="carousel-item {% if forloop.first %}active{% endif %}">
+                            <img src="{{ image.file.url }}" class="d-block w-100 rounded">
+                        </div>
+                        {% endfor %}
+                    </div>
+
+                    {% if post.images.count > 1 %}
+                    <button class="carousel-control-prev" type="button" data-bs-target="#carouselPost" data-bs-slide="prev">
+                        <span class="carousel-control-prev-icon"></span>
+                    </button>
+                    <button class="carousel-control-next" type="button" data-bs-target="#carouselPost" data-bs-slide="next">
+                        <span class="carousel-control-next-icon"></span>
+                    </button>
+                    {% endif %}
+                </div>
+                {% endif %}
+
+                <p>{{ post.content }}</p>
+
+                <button id="like-btn"
+                        class="btn btn-sm {% if liked %}btn-danger{% else %}btn-outline-danger{% endif %}">
+                    ❤️ <span id="likes-count">{{ post.likes.count }}</span>
+                </button>
+
+
+                <hr>
+
+                <h6>Comments</h6>
+
+                {% for comment in comments %}
+                    <div class="d-flex justify-content-between mb-2">
+                        <div>
+                            <strong>{{ comment.author.username }}</strong>
+                            {{ comment.text }}
+                        </div>
+
+                        {% if comment.author == user or is_author %}
+                        <form method="post" action="{% url 'comment_delete' comment.id %}">
+                            {% csrf_token %}
+                            <button class="btn btn-sm btn-link text-danger">✕</button>
+                        </form>
+                        {% endif %}
+                    </div>
+                {% empty %}
+                    <p class="text-muted">No comments yet</p>
+                {% endfor %}
+
+                <form method="post" action="{% url 'comment_create' post.id %}">
+                    {% csrf_token %}
+                    <div class="input-group mt-3">
+                        <input name="text" class="form-control" placeholder="Add comment...">
+                        <button class="btn btn-primary">Send</button>
+                    </div>
+                </form>
+
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<script>
+document.getElementById('like-btn').onclick = function () {
+    fetch("{% url 'post_like' post.id %}", {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': '{{ csrf_token }}'
+        }
+    })
+    .then(res => res.json())
+    .then(data => {
+        document.getElementById('likes-count').innerText = data.likes_count
+        this.classList.toggle('btn-danger')
+        this.classList.toggle('btn-outline-danger')
+    })
+}
+</script>
+{% endblock %}

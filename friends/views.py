@@ -4,6 +4,7 @@ from django.shortcuts import redirect, get_object_or_404
 from django.contrib.auth.mixins import LoginRequiredMixin
 from auth_system.models import User
 from friends.services import follow_user, unfollow_user, is_following, can_view_profile, follow_request_sent
+from posts.models import Post
 
 class UserProfileView(LoginRequiredMixin, DetailView):
     model = User
@@ -11,6 +12,12 @@ class UserProfileView(LoginRequiredMixin, DetailView):
     context_object_name = 'profile_user'
     slug_field = 'username'
     slug_url_kwarg = 'username'
+
+    def dispatch(self, request, *args, **kwargs):
+        if kwargs['username'] == request.user.username:
+            return redirect('profile')
+        return super().dispatch(request, *args, **kwargs)
+
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -22,7 +29,10 @@ class UserProfileView(LoginRequiredMixin, DetailView):
         context['follow_request_sent'] = follow_request_sent(viewer, owner)
 
         if context['can_view_profile']:
-            context['posts'] = owner.posts.select_related('author')
+            context['posts'] = Post.objects.filter(
+                author=owner,
+                is_active=True
+            )
         else:
             context['posts'] = []
 

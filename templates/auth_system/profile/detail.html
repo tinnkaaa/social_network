@@ -5,7 +5,6 @@
 <div class="row justify-content-center">
     <div class="col-lg-9">
 
-        <!-- PROFILE HEADER -->
         <div class="card mb-4 shadow-sm">
             <div class="card-body d-flex align-items-center gap-4">
 
@@ -24,7 +23,6 @@
                         <p class="text-muted mb-2">No bio yet</p>
                     {% endif %}
 
-                    <!-- STATS -->
                     <div class="d-flex gap-4 mb-3">
                         <div>
                             <span class="stat-number">{{ request.user.profile.posts_count|default:0 }}</span><br>
@@ -40,30 +38,45 @@
                         </div>
                     </div>
 
-                    <!-- EDIT PROFILE BUTTON -->
-                    <a href="{% url 'profile_edit' %}" class="btn btn-outline-secondary btn-sm px-4">
-                        Edit profile
-                    </a>
+                    <div class="d-flex gap-2">
+                        <a href="{% url 'post_create' %}" class="btn btn-dark btn-sm ">
+                            <i class="bi bi-plus-lg me-1"></i>
+                            Create post
+                        </a>
+
+                        <a href="{% url 'profile_edit' %}" class="btn btn-outline-secondary btn-sm px-4">
+                            Edit profile
+                        </a>
+                    </div>
                 </div>
             </div>
         </div>
 
-        <!-- POSTS SECTION -->
         <div class="card shadow-sm">
             <div class="card-body">
                 <h6 class="text-muted mb-3">Your posts</h6>
-                {% if posts %}
+                <div class="row g-1">
                     {% for post in posts %}
-                        <div class="border-bottom pb-3 mb-3">
-                            <p class="mb-1">{{ post.content }}</p>
-                            <small class="text-muted d-block mb-2">
-                                {{ post.created_at|date:"d M Y H:i" }}
-                            </small>
+                        <div class="col-4">
+                            <a href="{{ post.get_absolute_url }}" class="post-thumb d-block">
+                                {% with img=post.images.first %}
+                                    {% if img %}
+                                        <img src="{{ img.file.url }}"
+                                            class="img-fluid w-100"
+                                            style="aspect-ratio:1/1; object-fit:cover;">
+                                    {% else %}
+                                        <div class="bg-light d-flex align-items-center justify-content-center"
+                                            style="aspect-ratio:1/1;">
+                                            <small class="text-muted">No image</small>
+                                        </div>
+                                    {% endif %}
+                                {% endwith %}
+                            </a>
                         </div>
+                    {% empty %}
+                        <p class="text-muted text-center mt-4">You have no posts yet</p>
                     {% endfor %}
-                {% else %}
-                    <p class="text-muted text-center mb-0">No posts yet</p>
-                {% endif %}
+                </div>
             </div>
         </div>
 

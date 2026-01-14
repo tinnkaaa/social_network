@@ -1,8 +1,9 @@
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 from django.views.generic import CreateView, UpdateView, DetailView
 from django.urls import reverse_lazy
 from .forms import RegisterForm, ProfileForm
 from .models import Profile, User
+from posts.models import Post
 from django.contrib.auth.mixins import LoginRequiredMixin
 
 # Create your views here.
@@ -24,6 +25,7 @@ class ProfileView(LoginRequiredMixin, DetailView):
         user = self.request.user
         context['followers_count'] = user.profile.followers_count
         context['following_count'] = user.profile.following_count
+        context['posts'] = Post.objects.filter(author=self.request.user).prefetch_related('images')
         return context
 
 class ProfileUpdateView(LoginRequiredMixin, UpdateView):
