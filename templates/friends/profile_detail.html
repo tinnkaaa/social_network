@@ -30,11 +30,15 @@
                             <span id="followers-count" class="stat-number">
                                 {{ profile_user.profile.followers_count }}
                             </span><br>
-                            <small class="text-muted">Followers</small>
+                            <a href="{% url 'followers_list' profile_user.username %}">
+                                <small class="text-muted">Followers</small>
+                            </a>
                         </div>
                         <div>
                             <span class="stat-number">{{ profile_user.profile.following_count }}</span><br>
-                            <small class="text-muted">Following</small>
+                            <a href="{% url 'following_list' profile_user.username %}">
+                                <small class="text-muted">Following</small>
+                            </a>
                         </div>
                     </div>
 

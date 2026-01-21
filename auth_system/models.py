@@ -90,7 +90,11 @@ class Profile(models.Model):
         ]
 
     def followers(self):
-        return self.user.followers_set.all()
+        return User.objects.filter(
+            following_relations__following=self.user
+        ).distinct()
 
     def following(self):
-        return self.user.following_set.all()
+        return User.objects.filter(
+            followers_relations__follower=self.user
+        ).distinct()

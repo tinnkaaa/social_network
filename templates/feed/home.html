@@ -1,0 +1,173 @@
+{% extends "base.html" %}
+{% load static %}
+{% load humanize %}
+
+{% block title %}Feed{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center mt-4">
+    <div class="col-lg-8">
+
+        {% for post in posts %}
+        <div class="card mb-3 shadow-sm">
+            <div class="card-body">
+
+                <div class="d-flex align-items-center mb-2">
+                    {% if post.author.profile.avatar %}
+                        <img src="{{ post.author.profile.avatar.url }}"
+                             class="rounded-circle me-2"
+                             style="width:40px;height:40px;object-fit:cover">
+                    {% else %}
+                        <img src="{% static 'avatar.png' %}"
+                             class="rounded-circle me-2"
+                             style="width:40px;height:40px;object-fit:cover">
+                    {% endif %}
+
+                    <a href="{% url 'user_profile' post.author.username %}"
+                       class="fw-bold text-decoration-none">
+                        {{ post.author.username }}
+                    </a>
+                    <small class="text-muted ms-2">
+                        {{ post.created_at|naturaltime }}
+                    </small>
+                </div>
+
+                <p>{{ post.content }}</p>
+
+                {% if post.images.exists %}
+                <div id="carouselPost{{ post.id }}"
+                     class="carousel slide mb-2"
+                     data-bs-ride="carousel">
+
+                    <div class="carousel-inner">
+                        {% for image in post.images.all %}
+                        <div class="carousel-item {% if forloop.first %}active{% endif %}">
+                            <img src="{{ image.file.url }}"
+                                 class="d-block w-100 rounded">
+                        </div>
+                        {% endfor %}
+                    </div>
+
+                    {% if post.images.count > 1 %}
+                    <button class="carousel-control-prev" type="button"
+                            data-bs-target="#carouselPost{{ post.id }}"
+                            data-bs-slide="prev">
+                        <span class="carousel-control-prev-icon"></span>
+                    </button>
+                    <button class="carousel-control-next" type="button"
+                            data-bs-target="#carouselPost{{ post.id }}"
+                            data-bs-slide="next">
+                        <span class="carousel-control-next-icon"></span>
+                    </button>
+                    {% endif %}
+                </div>
+                {% endif %}
+
+                <div class="d-flex align-items-center mb-2">
+                    <button class="btn btn-sm like-btn me-2
+                        {% if user in post.likes.all %}
+                            btn-danger
+                        {% else %}
+                            btn-outline-danger
+                        {% endif %}"
+                        data-post-id="{{ post.id }}">
+                        ❤️ <span class="likes-count">{{ post.likes.count }}</span>
+                    </button>
+
+                    <span class="text-muted comments-count">
+                        {{ post.comments.count }} comments
+                    </span>
+                </div>
+
+                <div id="comments-{{ post.id }}" class="mb-2">
+                    {% for comment in post.comments.all %}
+                    <div class="d-flex justify-content-between mb-1">
+                        <div>
+                            <strong>{{ comment.author.username }}</strong>
+                            {{ comment.text }}
+                        </div>
+                    </div>
+                    {% empty %}
+                    <p class="text-muted">No comments yet</p>
+                    {% endfor %}
+                </div>
+
+                <form class="comment-form" data-post-id="{{ post.id }}">
+                    {% csrf_token %}
+                    <div class="input-group">
+                        <input name="text"
+                               class="form-control"
+                               placeholder="Add comment..."
+                               required>
+                        <button class="btn btn-primary">Send</button>
+                    </div>
+                </form>
+
+            </div>
+        </div>
+        {% empty %}
+        <p class="text-muted text-center">No posts to display.</p>
+        {% endfor %}
+
+    </div>
+</div>
+
+<script>
+document.querySelectorAll('.like-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+        const postId = btn.dataset.postId;
+
+        fetch("{% url 'post_like' 0 %}".replace('0', postId), {
+            method: 'POST',
+            headers: { 'X-CSRFToken': '{{ csrf_token }}' }
+        })
+        .then(res => res.json())
+        .then(data => {
+            btn.querySelector('.likes-count').innerText = data.likes_count;
+            btn.classList.toggle('btn-danger', data.liked);
+            btn.classList.toggle('btn-outline-danger', !data.liked);
+        });
+    });
+});
+
+document.querySelectorAll('.comment-form').forEach(form => {
+    form.addEventListener('submit', e => {
+        e.preventDefault();
+
+        const postId = form.dataset.postId;
+        const input = form.querySelector('input[name="text"]');
+        const text = input.value.trim();
+        if (!text) return;
+
+        fetch("{% url 'comment_create' 0 %}".replace('0', postId), {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': '{{ csrf_token }}',
+                'Content-Type': 'application/x-www-form-urlencoded'
+            },
+            body: `text=${encodeURIComponent(text)}`
+        })
+        .then(res => res.json())
+        .then(data => {
+            const commentsBlock = document.getElementById(`comments-${postId}`);
+
+            const div = document.createElement('div');
+            div.className = 'd-flex justify-content-between mb-1';
+            div.innerHTML = `
+                <div>
+                    <strong>${data.author}</strong> ${data.text}
+                </div>
+            `;
+
+            commentsBlock.appendChild(div);
+            input.value = '';
+
+            // update counter
+            const counter = form.closest('.card-body')
+                                .querySelector('.comments-count');
+            counter.innerText = `${data.comments_count} comments`;
+        });
+    });
+});
+</script>
+{% endblock %}

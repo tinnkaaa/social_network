@@ -23,7 +23,7 @@ class Post(models.Model):
         ordering = ['-created_at']
 
     def get_absolute_url(self):
-        return reverse('post_detail', kwargs={'pk': self.pk})
+        return reverse('post_detail', args=[self.pk])
 
 class PostImage(models.Model):
     post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name='images')

@@ -1,9 +1,10 @@
 from django.http import JsonResponse
-from django.views.generic import DetailView, View, TemplateView
+from django.views.generic import DetailView, View, TemplateView, ListView
 from django.shortcuts import redirect, get_object_or_404
 from django.contrib.auth.mixins import LoginRequiredMixin
 from auth_system.models import User
-from friends.services import follow_user, unfollow_user, is_following, can_view_profile, follow_request_sent
+from .models import Follow
+from .services import follow_user, unfollow_user, is_following, can_view_profile, follow_request_sent
 from posts.models import Post
 
 class UserProfileView(LoginRequiredMixin, DetailView):
@@ -57,6 +58,37 @@ class FollowActionView(LoginRequiredMixin, View):
             'result': result,
             'followers_count': target.profile.followers_count
         })
+
+class FollowersListView(LoginRequiredMixin, ListView):
+    model = User
+    template_name = 'friends/followers_list.html'
+    context_object_name = 'users'
+
+    def get_queryset(self):
+        user = get_object_or_404(User, username=self.kwargs['username'])
+        return user.profile.followers()
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['owner'] = get_object_or_404(User, username=self.kwargs['username'])
+        context['can_remove'] = self.request.user == context['owner']
+        return context
+
+class FollowingListView(LoginRequiredMixin, ListView):
+    model = User
+    template_name = 'friends/following_list.html'
+    context_object_name = 'users'
+
+    def get_queryset(self):
+        user = get_object_or_404(User, username=self.kwargs['username'])
+        return user.profile.following()
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['owner'] = get_object_or_404(User, username=self.kwargs['username'])
+        context['viewer'] = self.request.user
+        return context
+
 
 class UserSearchApiView(LoginRequiredMixin, View):
     def get(self, request):

@@ -131,6 +131,15 @@ class CommentCreateView(LoginRequiredMixin, CreateView):
     def form_valid(self, form):
         form.instance.author = self.request.user
         form.instance.post = get_object_or_404(Post, pk=self.kwargs['pk'])
+        self.object = form.save()
+
+        if self.request.headers.get('x-requested-with') == 'XMLHttpRequest':
+            return JsonResponse({
+                "id": self.object.id,
+                "author": self.object.author.username,
+                "text": self.object.text,
+                "comments_count": self.object.post.comments.count(),
+            })
         return super().form_valid(form)
 
     def get_success_url(self):

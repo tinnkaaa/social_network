@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Following{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center mt-4">
+    <div class="col-lg-6">
+
+        <!-- Header -->
+        <div class="d-flex align-items-center mb-3">
+            <a href="{% url 'user_profile' owner.username %}"
+               class="btn btn-outline-secondary btn-sm me-3">
+                <i class="bi bi-arrow-left"></i>
+            </a>
+
+            <div>
+                <h4 class="mb-0">{{ owner.username }}</h4>
+                <small class="text-muted">Following</small>
+            </div>
+        </div>
+
+        <!-- Card -->
+        <div class="card shadow-sm">
+            <div class="card-body p-0">
+
+                {% for user in users %}
+                    <div class="d-flex align-items-center justify-content-between px-3 py-3 border-bottom">
+
+                        <div class="d-flex align-items-center">
+                            {% if user.profile.avatar %}
+                                <img src="{{ user.profile.avatar.url }}"
+                                     class="rounded-circle me-3"
+                                     style="width:48px;height:48px;object-fit:cover;">
+                            {% else %}
+                                <img src="{% static 'avatar.png' }}"
+                                     class="rounded-circle me-3"
+                                     style="width:48px;height:48px;object-fit:cover;">
+                            {% endif %}
+
+                            <div>
+                                <a href="{% url 'user_profile' user.username %}"
+                                   class="fw-semibold text-decoration-none text-dark">
+                                    {{ user.username }}
+                                </a>
+                                {% if user.profile.bio %}
+                                    <div class="text-muted small">
+                                        {{ user.profile.bio|truncatechars:40 }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <a href="{% url 'user_profile' user.username %}"
+                           class="btn btn-outline-primary btn-sm">
+                            View
+                        </a>
+
+                    </div>
+                {% empty %}
+                    <div class="text-center py-5 text-muted">
+                        <i class="bi bi-people fs-1 mb-2"></i>
+                        <p class="mb-0">Not following anyone yet</p>
+                    </div>
+                {% endfor %}
+
+            </div>
+        </div>
+
+    </div>
+</div>
+{% endblock %}
