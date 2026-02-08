@@ -25,6 +25,7 @@ urlpatterns = [
     path('', include('friends.urls')),
     path('posts/', include('posts.urls')),
     path("", include('feed.urls')),
+    path('', include('chat.urls'))
 ]
 
 if settings.DEBUG:

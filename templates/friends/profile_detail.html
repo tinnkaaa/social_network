@@ -39,6 +39,12 @@
                             <a href="{% url 'following_list' profile_user.username %}">
                                 <small class="text-muted">Following</small>
                             </a>
+                            {% if request.user != profile_user %}
+                                <a href="{% url 'chat_start' profile_user.id %}"
+                                    class="btn btn-primary w-100 mt-2">
+                                        💬 Написати
+                                 </a>
+                            {% endif %}
                         </div>
                     </div>
 
