@@ -1,13 +1,20 @@
-from django.contrib.auth.forms import UserCreationForm
-from .models import User, Profile
+from allauth.account.forms import SignupForm
 from django import forms
 
-class RegisterForm(UserCreationForm):
-    class Meta:
-        model = User
-        fields = ('username', 'email')
 
-class ProfileForm(forms.ModelForm):
-    class Meta:
-        model = Profile
-        fields = ('bio', 'avatar', 'birth_date', 'gender', 'phone_number')
+class CustomSignupForm(SignupForm):
+    gender = forms.ChoiceField(
+        choices=[('male', 'Male'), ('female', 'Female')],
+        required=False
+    )
+    phone_number = forms.CharField(required=False)
+
+    def save(self, request):
+        user = super().save(request)
+        profile = user.profile
+
+        profile.gender = self.cleaned_data.get('gender')
+        profile.phone_number = self.cleaned_data.get('phone_number')
+        profile.save()
+
+        return user

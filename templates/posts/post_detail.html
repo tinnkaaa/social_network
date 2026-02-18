@@ -88,47 +88,70 @@
 </div>
 
 <script>
-document.querySelectorAll('.like-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-        const postId = btn.dataset.postId;
-        fetch("{% url 'post_like' 0 %}".replace('0', postId), {
-            method: 'POST',
-            headers: {'X-CSRFToken': '{{ csrf_token }}'},
-        })
-        .then(res => res.json())
-        .then(data => {
-            btn.querySelector('.likes-count').innerText = data.likes_count;
-            btn.classList.toggle('btn-danger');
-            btn.classList.toggle('btn-outline-danger');
+document.addEventListener('DOMContentLoaded', () => {
+    // Лайки
+    const likeBtn = document.querySelector('.like-btn');
+    if(likeBtn){
+        likeBtn.addEventListener('click', () => {
+            const postId = likeBtn.dataset.postId;
+            fetch("{% url 'post_like' 0 %}".replace('0', postId), {
+                method: 'POST',
+                headers: { 'X-CSRFToken': '{{ csrf_token }}' }
+            })
+            .then(res => res.json())
+            .then(data => {
+                likeBtn.querySelector('.likes-count').innerText = data.likes_count;
+                likeBtn.classList.toggle('btn-danger', data.liked);
+                likeBtn.classList.toggle('btn-outline-danger', !data.liked);
+            });
         });
-    });
-});
+    }
 
-document.querySelectorAll('.comment-form').forEach(form => {
-    form.addEventListener('submit', e => {
-        e.preventDefault();
-        const postId = form.dataset.postId;
-        const text = form.querySelector('input[name="text"]').value;
-        fetch("{% url 'comment_create' 0 %}".replace('0', postId), {
-            method: 'POST',
-            headers: {
-                'X-CSRFToken': '{{ csrf_token }}',
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({text: text})
-        })
-        .then(res => res.json())
-        .then(data => {
-            if(data.success){
-                const commentSection = document.getElementById('comments-' + postId);
-                const div = document.createElement('div');
-                div.className = 'd-flex justify-content-between mb-2';
-                div.innerHTML = `<div><strong>${data.author}</strong> ${data.text}</div>`;
-                commentSection.insertBefore(div, form);
-                form.querySelector('input[name="text"]').value = '';
-            }
+    // Коментарі
+    const commentForm = document.querySelector('.comment-form');
+    if(commentForm){
+        commentForm.addEventListener('submit', e => {
+            e.preventDefault();
+            const postId = commentForm.dataset.postId;
+            const input = commentForm.querySelector('input[name="text"]');
+            const text = input.value.trim();
+            if(!text) return;
+
+            fetch("{% url 'comment_create' 0 %}".replace('0', postId), {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': '{{ csrf_token }}',
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({text: text})
+            })
+            .then(res => res.json())
+            .then(data => {
+                if(data.success){
+                    // Додаємо коментар у DOM
+                    const commentsBlock = document.getElementById(`comments-${postId}`);
+                    const div = document.createElement('div');
+                    div.className = 'd-flex justify-content-between mb-2';
+                    div.innerHTML = `
+                        <div>
+                            <strong>${data.author}</strong> ${data.text}
+                        </div>
+                        <form method="post" action="/posts/comment/${data.comment_id}/delete/">
+                            <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
+                            <button class="btn btn-sm btn-link text-danger">✕</button>
+                        </form>
+                    `;
+                    commentsBlock.appendChild(div);
+
+                    // Оновлюємо лічильник коментарів
+                    const counter = document.querySelector('.comments-count');
+                    if(counter) counter.innerText = `${data.comments_count} comments`;
+
+                    input.value = '';
+                }
+            });
         });
-    });
+    }
 });
 </script>
 {% endblock %}

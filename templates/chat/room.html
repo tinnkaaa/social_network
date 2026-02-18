@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load static %}
 {% block title %}Chat{% endblock %}
 
 {% block content %}
@@ -13,10 +14,10 @@
         {% for message in messages %}
         <div class="message-wrapper" style="display:flex; flex-direction:column; gap:2px; {% if message.sender == request.user %} align-items:flex-end; {% else %} align-items:flex-start; {% endif %}">
             <div class="message-user" style="display:flex; align-items:center; gap:8px;">
-                {% if message.sender.profile.avatar.url %}
+                {% if message.sender.profile.avatar %}
                     <img src="{{ message.sender.profile.avatar.url }}" alt="avatar" style="width:30px; height:30px; border-radius:50%; object-fit:cover;">
                 {% else %}
-                    <div style="width:30px; height:30px; border-radius:50%; background:#555;"></div>
+                    <img src="{% static 'default_avatar.png' %}" alt="avatar" style="width:30px; height:30px; border-radius:50%; object-fit:cover;">
                 {% endif %}
                 <a href="{% url 'user_profile' message.sender.username %}" style="color:white; font-weight:600; text-decoration:none;">
                     {{ message.sender.username }}
@@ -39,6 +40,8 @@
 <script>
 const chatId = "{{ chat.id }}";
 const currentUser = "{{ request.user.username }}";
+const currentUserAvatar = "{% if request.user.profile.avatar %}{{ request.user.profile.avatar.url }}{% else %}{% static 'default_avatar.png' %}{% endif %}";
+
 const chatLog = document.getElementById("chat-log");
 const input = document.getElementById("chat-message-input");
 const sendBtn = document.getElementById("chat-message-submit");
@@ -51,18 +54,12 @@ function scrollBottom() {
 }
 scrollBottom();
 
-function sendMessage() {
-    const msg = input.value.trim();
-    if (!msg || socket.readyState !== WebSocket.OPEN) return;
-
-    socket.send(JSON.stringify({ message: msg }));
-    input.value = "";
-
+function createMessageElement(username, avatarUrl, text, isCurrentUser) {
     const wrapper = document.createElement("div");
     wrapper.style.display = "flex";
     wrapper.style.flexDirection = "column";
     wrapper.style.gap = "2px";
-    wrapper.style.alignItems = "flex-end";
+    wrapper.style.alignItems = isCurrentUser ? "flex-end" : "flex-start";
 
     const userDiv = document.createElement("div");
     userDiv.style.display = "flex";
@@ -70,15 +67,15 @@ function sendMessage() {
     userDiv.style.gap = "8px";
 
     const avatar = document.createElement("img");
-    avatar.src = "{{ request.user.profile.avatar.url|default:'/static/default_avatar.png' }}";
+    avatar.src = avatarUrl;
     avatar.style.width = "30px";
     avatar.style.height = "30px";
     avatar.style.borderRadius = "50%";
     avatar.style.objectFit = "cover";
 
     const usernameLink = document.createElement("a");
-    usernameLink.href = "/profile/{{ request.user.username }}/";
-    usernameLink.textContent = currentUser;
+    usernameLink.href = `/profile/${username}/`;
+    usernameLink.textContent = username;
     usernameLink.style.color = "white";
     usernameLink.style.fontWeight = "600";
     usernameLink.style.textDecoration = "none";
@@ -87,13 +84,29 @@ function sendMessage() {
     userDiv.appendChild(usernameLink);
 
     const msgDiv = document.createElement("div");
-    msgDiv.textContent = msg;
-    msgDiv.style.cssText = "max-width:70%; padding:10px 14px; border-radius:14px; font-size:14px; word-wrap:break-word; background:#2563eb;";
+    msgDiv.textContent = text;
+    msgDiv.style.cssText = `
+        max-width:70%;
+        padding:10px 14px;
+        border-radius:14px;
+        font-size:14px;
+        word-wrap:break-word;
+        background: ${isCurrentUser ? "#2563eb" : "#1e293b"};
+    `;
 
     wrapper.appendChild(userDiv);
     wrapper.appendChild(msgDiv);
     chatLog.appendChild(wrapper);
     scrollBottom();
+}
+
+function sendMessage() {
+    const msg = input.value.trim();
+    if (!msg || socket.readyState !== WebSocket.OPEN) return;
+
+    socket.send(JSON.stringify({ message: msg }));
+    createMessageElement(currentUser, currentUserAvatar, msg, true);
+    input.value = "";
 }
 
 sendBtn.onclick = sendMessage;
@@ -109,42 +122,8 @@ socket.onmessage = function(e) {
     if (!data.message) return;
     if (data.username === currentUser) return;
 
-    const wrapper = document.createElement("div");
-    wrapper.style.display = "flex";
-    wrapper.style.flexDirection = "column";
-    wrapper.style.gap = "2px";
-    wrapper.style.alignItems = "flex-start";
-
-    const userDiv = document.createElement("div");
-    userDiv.style.display = "flex";
-    userDiv.style.alignItems = "center";
-    userDiv.style.gap = "8px";
-
-    const avatar = document.createElement("img");
-    avatar.src = data.avatar || "/static/default_avatar.png";
-    avatar.style.width = "30px";
-    avatar.style.height = "30px";
-    avatar.style.borderRadius = "50%";
-    avatar.style.objectFit = "cover";
-
-    const usernameLink = document.createElement("a");
-    usernameLink.href = `/profile/${data.username}/`;
-    usernameLink.textContent = data.username;
-    usernameLink.style.color = "white";
-    usernameLink.style.fontWeight = "600";
-    usernameLink.style.textDecoration = "none";
-
-    userDiv.appendChild(avatar);
-    userDiv.appendChild(usernameLink);
-
-    const msgDiv = document.createElement("div");
-    msgDiv.textContent = data.message;
-    msgDiv.style.cssText = "max-width:70%; padding:10px 14px; border-radius:14px; font-size:14px; word-wrap:break-word; background:#1e293b;";
-
-    wrapper.appendChild(userDiv);
-    wrapper.appendChild(msgDiv);
-    chatLog.appendChild(wrapper);
-    scrollBottom();
+    const avatarUrl = data.avatar || "{% static 'default_avatar.png' %}";
+    createMessageElement(data.username, avatarUrl, data.message, false);
 };
 </script>
 {% endblock %}

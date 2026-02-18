@@ -1,4 +1,5 @@
 from django.core.exceptions import PermissionDenied
+import json
 from django.views import View
 from django.views.generic import DetailView, CreateView, UpdateView, DeleteView
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
@@ -77,23 +78,40 @@ class PostLikeView(LoginRequiredMixin, DetailView):
         post = get_object_or_404(Post, pk=pk)
         action = toggle_like(request.user, post)
         return JsonResponse({
-            'action': action,
+            'liked': action == 'liked',
             'likes_count': post.likes.count()
         })
 
 class CommentCreateView(LoginRequiredMixin, View):
     def post(self, request, pk):
         post = get_object_or_404(Post, pk=pk)
-        text = request.POST.get('text')
 
-        if text:
-            Comment.objects.create(
-                post=post,
-                author=request.user,
-                text=text
-            )
+        try:
+            data = json.loads(request.body)
+            text = data.get('text')
+        except (json.JSONDecodeError, TypeError):
+            text = request.POST.get('text')
 
-        return redirect('post_detail', pk=pk)
+        if not text:
+            return JsonResponse({'error': 'Text is required.'}, status=400)
+
+        comment = Comment.objects.create(
+            post=post,
+            author=request.user,
+            text=text
+        )
+
+        post.comments_count = post.comments.count()
+        post.save(update_fields=['comments_count'])
+
+        return JsonResponse({
+            'success': True,
+            'comment_id': comment.id,
+            'author': comment.author.username,
+            'text': comment.text,
+            'created_at': comment.created_at.strftime('%Y-%m-%d %H:%M'),
+            'comments_count': post.comments_count
+        })
 
 
 class CommentDeleteView(LoginRequiredMixin, View):

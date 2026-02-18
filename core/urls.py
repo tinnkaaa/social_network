@@ -18,14 +18,17 @@ from django.contrib import admin
 from django.urls import path, include
 from django.conf.urls.static import static
 from django.conf import settings
+from allauth.account import views as allauth_views
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path("accounts/", include("allauth.urls")),
     path('', include('auth_system.urls')),
     path('', include('friends.urls')),
     path('posts/', include('posts.urls')),
     path("", include('feed.urls')),
-    path('', include('chat.urls'))
+    path('', include('chat.urls')),
+    path('notifications', include('notifications.urls'))
 ]
 
 if settings.DEBUG:

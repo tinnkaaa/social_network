@@ -1,0 +1,112 @@
+{% extends "base.html" %}
+{% load socialaccount %}
+
+{% block content %}
+<style>
+.auth-wrapper {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background:
+        radial-gradient(circle at top, #1e1b4b, transparent 60%),
+        linear-gradient(135deg, #020617, #020617);
+}
+
+.auth-card {
+    width: 420px;
+    background: rgba(15, 23, 42, 0.9);
+    backdrop-filter: blur(16px);
+    border-radius: 20px;
+    padding: 40px;
+    box-shadow: 0 0 60px rgba(99,102,241,.35);
+    color: white;
+}
+
+.auth-card h1 {
+    font-size: 28px;
+    margin-bottom: 8px;
+}
+
+.auth-card p {
+    opacity: .7;
+    margin-bottom: 24px;
+}
+
+.auth-card input {
+    width: 100%;
+    padding: 14px;
+    margin-bottom: 14px;
+    border-radius: 12px;
+    border: 1px solid #1e293b;
+    background: #020617;
+    color: white;
+}
+
+.auth-card input:focus {
+    outline: none;
+    border-color: #6366f1;
+}
+
+.auth-card button {
+    width: 100%;
+    padding: 14px;
+    border-radius: 12px;
+    border: none;
+    background: linear-gradient(135deg, #6366f1, #8b5cf6);
+    color: white;
+    font-weight: 600;
+    cursor: pointer;
+    margin-top: 6px;
+}
+
+.social {
+    margin-top: 22px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.social a {
+    padding: 12px;
+    border-radius: 12px;
+    text-align: center;
+    text-decoration: none;
+    font-weight: 500;
+}
+
+.google {
+    background: white;
+    color: black;
+}
+
+.github {
+    background: #111827;
+    color: white;
+}
+</style>
+
+<div class="auth-wrapper">
+    <div class="auth-card">
+        <h1>Create account 🚀</h1>
+        <p>Join us in less than a minute</p>
+
+        <form method="post">
+            {% csrf_token %}
+            {{ form.email }}
+            {{ form.password1 }}
+            {{ form.password2 }}
+            {{ form.gender }}
+            {{ form.phone_number }}
+            <button type="submit">Create account</button>
+        </form>
+
+        <div class="social">
+            <a href="{% provider_login_url 'google' %}" class="google">
+                Sign up with Google
+            </a>
+
+        </div>
+    </div>
+</div>
+{% endblock %}

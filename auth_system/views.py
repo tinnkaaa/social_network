@@ -1,21 +1,13 @@
 from django.shortcuts import render, redirect
-from django.views.generic import CreateView, UpdateView, DetailView
+from django.views.generic import UpdateView, DetailView
 from django.urls import reverse_lazy
-from .forms import RegisterForm, ProfileForm
 from .models import Profile, User
 from posts.models import Post
 from django.contrib.auth.mixins import LoginRequiredMixin
 
-# Create your views here.
-class RegisterView(CreateView):
-    model = User
-    form_class = RegisterForm
-    template_name = 'auth_system/register.html'
-    success_url = reverse_lazy('login')
-
 class ProfileView(LoginRequiredMixin, DetailView):
     model = Profile
-    template_name = 'auth_system/profile/detail.html'
+    template_name = 'account/profile/detail.html'
 
     def get_object(self):
         return self.request.user.profile
@@ -30,8 +22,8 @@ class ProfileView(LoginRequiredMixin, DetailView):
 
 class ProfileUpdateView(LoginRequiredMixin, UpdateView):
     model = Profile
-    form_class = ProfileForm
-    template_name = 'auth_system/profile/update.html'
+    fields = ['avatar', 'bio', 'gender', 'phone_number', 'is_private']
+    template_name = 'account/profile/update.html'
     success_url = reverse_lazy('profile')
 
     def get_object(self):

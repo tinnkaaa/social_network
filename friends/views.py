@@ -66,7 +66,7 @@ class FollowersListView(LoginRequiredMixin, ListView):
 
     def get_queryset(self):
         user = get_object_or_404(User, username=self.kwargs['username'])
-        return user.profile.followers()
+        return User.objects.filter(following_relations__following=user)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -81,7 +81,7 @@ class FollowingListView(LoginRequiredMixin, ListView):
 
     def get_queryset(self):
         user = get_object_or_404(User, username=self.kwargs['username'])
-        return user.profile.following()
+        return User.objects.filter(followers_relations__follower=user)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)

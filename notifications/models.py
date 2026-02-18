@@ -1,20 +1,31 @@
 from django.db import models
-from auth_system.models import User
+from django.conf import settings
 
-# Create your models here.
 class Notification(models.Model):
-    TYPE = (
+
+    TYPE_CHOICES = (
         ('message', 'Нове повідомлення'),
-        ('like', 'Новий лайк'),
-        ('comment', 'Новий коментар'),
-        ('follow', 'Новий підпис'),
-        ('group_invite', 'Запрошення до групи'),
+        ('like', 'Новий лайк'),
+        ('comment', 'Новий коментар'),
+        ('follow', 'Новий підписник'),
     )
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='notifications', verbose_name='Користувач')
-    type = models.CharField(max_length=20, choices=TYPE, verbose_name='Тип')
-    data = models.JSONField(verbose_name='Дані')
-    is_read = models.BooleanField(default=False, verbose_name='Прочитано')
-    created_at = models.DateTimeField(auto_now_add=True, verbose_name='Дата створення')
-    updated_at = models.DateTimeField(auto_now=True, verbose_name='Дата оновлення')
 
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='notifications'
+    )
 
+    type = models.CharField(max_length=20, choices=TYPE_CHOICES)
+
+    data = models.JSONField(blank=True, null=True)
+
+    is_read = models.BooleanField(default=False)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"{self.user} - {self.type}"

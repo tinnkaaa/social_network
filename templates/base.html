@@ -136,6 +136,56 @@
             font-weight: 600;
         }
 
+        .notification-wrapper {
+            position: relative;
+            display: inline-block;
+        }
+
+        .notification-bell {
+            font-size: 22px;
+            text-decoration: none;
+            position: relative;
+        }
+
+        .notification-badge {
+            position: absolute;
+            top: -6px;
+            right: -10px;
+            background: red;
+            color: white;
+            border-radius: 50%;
+            padding: 3px 7px;
+            font-size: 12px;
+            display: none;
+        }
+
+        .notification-dropdown {
+            position: absolute;
+            right: 0;
+            top: 35px;
+            width: 320px;
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            display: none;
+            max-height: 400px;
+            overflow-y: auto;
+            z-index: 1000;
+        }
+
+        .notification-item {
+            padding: 10px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .notification-item.unread {
+            background: #f5f9ff;
+        }
+
+        .notification-item:hover {
+            background: #f1f1f1;
+        }
     </style>
     {% block extra_css %}{% endblock %}
 </head>
@@ -147,7 +197,6 @@
         <a class="navbar-brand" href="/">Social</a>
 
         {% if user.is_authenticated %}
-        <!-- 🔍 Live search -->
         <div class="search-box">
             <input
                 type="text"
@@ -160,6 +209,15 @@
             <div id="search-results" class="search-results"></div>
         </div>
         {% endif %}
+
+        <div class="notification-wrapper">
+            <a href="{% url 'notifications:list' %}" class="notification-bell">
+                🔔
+                <span id="notification-count" class="notification-badge"></span>
+            </a>
+
+            {% include "notifications/notification_dropdown.html" %}
+        </div>
 
         <ul class="navbar-nav align-items-center">
             <li class="nav-item">
@@ -179,7 +237,7 @@
                     </a>
                 </li>
                 <li class="nav-item">
-                    <form method="post" action="{% url 'logout' %}">
+                    <form method="post" action="{% url 'account_logout' %}">
                         {% csrf_token %}
                         <button class="btn btn-outline-danger btn-sm">
                             Logout
@@ -188,12 +246,12 @@
                 </li>
             {% else %}
                 <li class="nav-item me-2">
-                    <a class="btn btn-outline-primary btn-sm" href="{% url 'login' %}">
+                    <a class="btn btn-outline-primary btn-sm" href="{% url 'account_login' %}">
                         Login
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a class="btn btn-primary btn-sm" href="{% url 'register' %}">
+                    <a class="btn btn-primary btn-sm" href="{% url 'account_signup' %}">
                         Sign up
                     </a>
                 </li>
@@ -253,6 +311,52 @@ if (input) {
 }
 </script>
 {% block extra_js %}{% endblock %}
+<script>
+const bell = document.querySelector(".notification-bell");
+const dropdown = document.getElementById("notification-dropdown");
 
+bell.addEventListener("click", function(e) {
+    e.preventDefault();
+    dropdown.style.display =
+        dropdown.style.display === "block" ? "none" : "block";
+    loadNotificationsPreview();
+});
+
+function updateNotificationCount() {
+    fetch("{% url 'notifications:unread_count' %}")
+        .then(res => res.json())
+        .then(data => {
+            const badge = document.getElementById("notification-count");
+            if (data.count > 0) {
+                badge.innerText = data.count;
+                badge.style.display = "inline-block";
+            } else {
+                badge.style.display = "none";
+            }
+        });
+}
+
+function loadNotificationsPreview() {
+    fetch("{% url 'notifications:list' %}")
+        .then(response => response.text())
+        .then(html => {
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(html, "text/html");
+            const items = doc.querySelectorAll(".notification-item");
+
+            let container = document.getElementById("notification-list-preview");
+            container.innerHTML = "";
+
+            items.forEach((item, index) => {
+                if (index < 5) {
+                    container.appendChild(item.cloneNode(true));
+                }
+            });
+        });
+}
+
+updateNotificationCount();
+setInterval(updateNotificationCount, 5000);
+</script>
 </body>
 </html>
