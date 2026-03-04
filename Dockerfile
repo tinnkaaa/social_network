@@ -18,6 +18,12 @@ COPY . /app/
 
 RUN python manage.py collectstatic --noinput
 
+RUN python manage.py makemigrations
+
+RUN python manage.py migrate
+
+RUN python manage.py createsuperuser --noinput --username admin password Qwerty
+
 EXPOSE 8000
 
 ENTRYPOINT [ "gunicorn", "core.wsgi", "-b", "0.0.0.0:8000" ]
