@@ -22,7 +22,11 @@ RUN python manage.py makemigrations
 
 RUN python manage.py migrate
 
-RUN python manage.py createsuperuser --noinput --username admin password Qwerty
+ENV DJANGO_SUPERUSER_USERNAME=admin
+ENV DJANGO_SUPERUSER_PASSWORD=12345
+ENV DJANGO_SUPERUSER_EMAIL=admin@example.com
+
+RUN python manage.py createsuperuser --noinput
 
 EXPOSE 8000
 
