@@ -26,11 +26,14 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = os.getenv("SECRET_KEY")
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
 ALLOWED_HOSTS = ['social-network-yngr.onrender.com']
-CSRF_TRUSTED_ORIGINS = ['http://localhost', 'http://127.0.0.1']
-
+CSRF_TRUSTED_ORIGINS = [
+    'https://social-network-yngr.onrender.com',
+    'http://localhost',
+    'http://127.0.0.1'
+]
 
 # Application definition
 
@@ -187,7 +190,7 @@ EMAIL_PORT = 587
 EMAIL_USE_TLS = True
 EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER")
 EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD")
-DEFAULT_FROM_EMAIL = 'Social Network <your_email@gmail.com>'
+DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
 
 SOCIALACCOUNT_LOGIN_ON_GET = True
 SOCIALACCOUNT_AUTO_SIGNUP = True
