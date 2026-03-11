@@ -1,6 +1,7 @@
 #!/bin/bash
-
 set -e
+
+export DJANGO_SETTINGS_MODULE=core.settings
 
 echo "Apply migrations"
 python manage.py migrate --noinput
@@ -8,20 +9,14 @@ python manage.py migrate --noinput
 echo "Collect static"
 python manage.py collectstatic --noinput
 
-echo "Create admin if not exists"
+echo "Create superuser"
 
-python manage.py shell << END
-from django.contrib.auth import get_user_model
-User = get_user_model()
+export DJANGO_SUPERUSER_USERNAME=admin
+export DJANGO_SUPERUSER_PASSWORD=12345
+export DJANGO_SUPERUSER_EMAIL=admin@example.com
 
-username="admin"
-password="12345"
-email="admin@example.com"
-
-if not User.objects.filter(username=username).exists():
-    User.objects.create_superuser(username,email,password)
-END
+python manage.py createsuperuser --noinput || true
 
 echo "Start Daphne"
 
-exec daphne -b 0.0.0.0 -p 8000 core.asgi:application
+exec daphne -b 0.0.0.0 -p ${PORT:-8000} core.asgi:application
