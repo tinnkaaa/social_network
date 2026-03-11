@@ -1,37 +1,22 @@
 FROM python:3.12-slim
-# щоб не створювався .pyc
+
 ENV PYTHONDONTWRITEBYTECODE=1
-# щоб логи одразу виводились
 ENV PYTHONUNBUFFERED=1
 
 WORKDIR /app
 
 RUN apt-get update && apt-get install -y \
-	gcc \
-	&& rm -rf /var/lib/apt/lists/*
+    gcc \
+    && rm -rf /var/lib/apt/lists/*
 
-COPY requirements.txt /app/
+COPY requirements.txt .
 
 RUN pip install --no-cache-dir -r requirements.txt
 
-COPY . /app/
+COPY . .
 
-RUN python manage.py collectstatic --noinput
-
-RUN python manage.py makemigrations
-
-RUN python manage.py migrate
-
-ENV DJANGO_SUPERUSER_USERNAME=admin
-ENV DJANGO_SUPERUSER_PASSWORD=12345
-ENV DJANGO_SUPERUSER_EMAIL=admin@example.com
-
-RUN python manage.py createsuperuser --noinput
+RUN chmod +x /app/entrypoint.sh
 
 EXPOSE 8000
-EXPOSE 10000  # Daphne
 
-# Використовуємо entrypoint для вибору сервісу
-COPY entrypoint.sh /app/entrypoint.sh
-RUN chmod +x /app/entrypoint.sh
 ENTRYPOINT ["/app/entrypoint.sh"]

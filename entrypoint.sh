@@ -1,13 +1,27 @@
 #!/bin/bash
+
 set -e
 
-if [ "$RUN" = "gunicorn" ]; then
-    exec gunicorn core.wsgi:application -b 0.0.0.0:8000
-elif [ "$RUN" = "daphne" ]; then
-    exec daphne -b 0.0.0.0 -p 10000 core.asgi:application
-elif [ "$RUN" = "worker" ]; then
-    exec celery -A core worker --loglevel=info
-else
-    echo "Specify RUN=gunicorn|daphne|worker"
-    exit 1
-fi
+echo "Apply migrations"
+python manage.py migrate --noinput
+
+echo "Collect static"
+python manage.py collectstatic --noinput
+
+echo "Create admin if not exists"
+
+python manage.py shell << END
+from django.contrib.auth import get_user_model
+User = get_user_model()
+
+username="admin"
+password="12345"
+email="admin@example.com"
+
+if not User.objects.filter(username=username).exists():
+    User.objects.create_superuser(username,email,password)
+END
+
+echo "Start Daphne"
+
+exec daphne -b 0.0.0.0 -p 8000 core.asgi:application
