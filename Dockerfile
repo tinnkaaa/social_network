@@ -29,5 +29,9 @@ ENV DJANGO_SUPERUSER_EMAIL=admin@example.com
 RUN python manage.py createsuperuser --noinput
 
 EXPOSE 8000
+EXPOSE 10000  # Daphne
 
-ENTRYPOINT ["gunicorn", "core.wsgi:application", "--bind", "0.0.0.0:8000", "--workers", "3"]
+# Використовуємо entrypoint для вибору сервісу
+COPY entrypoint.sh /app/entrypoint.sh
+RUN chmod +x /app/entrypoint.sh
+ENTRYPOINT ["/app/entrypoint.sh"]
